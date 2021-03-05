@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app_project/core/manager/api.dart';
-import 'package:flutter_app_project/core/manager/apiManager.dart';
 import 'package:flutter_app_project/core/model/launch.dart';
-import 'package:flutter_app_project/ui/Details.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key, this.title}) : super(key: key);
@@ -15,16 +12,13 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final List<Launch> launchList = List();
-  final ScrollController scrollController = ScrollController();
+
 
   int _selectedIndex = 0;
   static const TextStyle optionStyle =
   TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
-  static const List<Widget> _widgetOptions = <Widget>[
-    Text(
-      'Index 0: Home',
-      style: optionStyle,
-    ),
+  static List<Widget> _widgetOptions = <Widget>[
+    _LaunchList(),
     Text(
       'Index 1: Business',
       style: optionStyle,
@@ -52,66 +46,7 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: Text("Next launch : "),
       ),
-      body: FutureBuilder(
-        future: Api().loadContent(context),
-        builder: (context, snapchot){
-          if(snapchot.hasData){
-            List<Launch> launchList = snapchot.data;
-
-        return SingleChildScrollView(
-          controller: scrollController,
-          child: ListView.builder(
-              shrinkWrap: true,
-              primary: false,
-              itemCount: launchList.length,
-              itemBuilder: (context, position) {
-                Launch launch = launchList[position];
-              return InkWell(
-                onTap: () {
-                Navigator.of(context).pushNamed(Details.route,
-                arguments: LaunchDetailsArguments(launch: launch));
-                },
-                child: Row(
-                  children: [
-                    Container(
-                        width: 100,
-                        height: 100,
-                        child: Image.network(
-                          launch.links.patch.small ?? launchList[0].links.patch.small,
-                          fit: BoxFit.cover,
-                        )),
-                    SizedBox(
-                    width: 16,
-                    ),
-                    Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                        launch.name,
-                        style: TextStyle(fontSize: 16),
-                        ),
-                        SizedBox(
-                        height: 8,
-                        ),
-                        Text("Launch date: ${launch.date_utc.substring(0,10)}")
-                        ],
-                        ),
-                    )
-                  ],
-                ),
-              );
-              },
-          ),
-
-        );
-      } else {
-          return Center(
-            child: CircularProgressIndicator(),
-          );
-        }
-    }),
+      body: _widgetOptions.elementAt(_selectedIndex),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -134,3 +69,5 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
+
