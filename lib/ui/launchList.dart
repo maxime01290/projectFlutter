@@ -5,20 +5,91 @@ import 'package:flutter_app_project/core/model/launch.dart';
 
 import 'Details.dart';
 
-class _LaunchList extends StatelessWidget {
+class LaunchPage extends StatefulWidget {
+  LaunchPage() : super();
+  @override
+  State<StatefulWidget> createState() => _LaunchList();
+}
+
+class _LaunchList extends State<StatefulWidget> {
   final ScrollController scrollController = ScrollController();
+  List<Launch> launchList = List();
+
+  void searchLaunch(String term) async {
+    setState(() {
+      filteredLaunch.clear();
+      filteredLaunch.addAll(Api().getLaunchByName(term));
+      numberItem = filteredLaunch.length;
+    });
+  }
 
   @override
+  void initState() {
+    searchController.addListener(() {
+      searchLaunch(searchController.text);
+    });
+    super.initState();
+  }
+  //searchBar
+  final TextEditingController searchController = TextEditingController();
+  List<Launch> filteredLaunch = List();
+  List<Launch> paginatedLaunchList = List();
+  bool isLoadingMore = false;
+  int offset = 0;
+
+  int numberItem = 0;
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
+    return Scaffold(
+        appBar: AppBar(
+        title: Text("Launch's list"),
+    ),
+     body: FutureBuilder(
         future: Api().loadContent(context),
         builder: (context, snapchot) {
           if (snapchot.hasData) {
-            List<Launch> launchList = snapchot.data;
-
+            if (searchController.text != null && searchController.text.isNotEmpty) {
+                launchList = filteredLaunch;
+            }else{
+              if (paginatedLaunchList.length == 0) {
+                paginatedLaunchList.clear();
+                paginatedLaunchList.addAll(snapchot.data);
+              }
+              launchList = paginatedLaunchList;
+            }
             return SingleChildScrollView(
               controller: scrollController,
-              child: ListView.builder(
+              child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: searchController,
+                              decoration: InputDecoration(
+                                  hintText: "Search...",
+                                  border: OutlineInputBorder(
+                                    borderRadius:
+                                    BorderRadius.all(Radius.circular(6)),
+                                  )),
+                              textInputAction: TextInputAction.done,
+                              onSubmitted: (term) {
+                                searchLaunch(term);
+                              },
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.search),
+                            onPressed: () {
+                              searchLaunch(searchController.text);
+                            },
+                          )
+                        ],
+                      ),
+              ),
+              ListView.builder(
                 shrinkWrap: true,
                 primary: false,
                 itemCount: launchList.length,
@@ -64,13 +135,14 @@ class _LaunchList extends StatelessWidget {
                   );
                 },
               ),
-
-            );
+            ]),
+          );
           } else {
             return Center(
               child: CircularProgressIndicator(),
             );
           }
-        });
+        })
+    );
   }
 }
